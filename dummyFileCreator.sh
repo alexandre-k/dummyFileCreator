@@ -117,6 +117,9 @@ arg_handler() {
                 REQUIRED_SIZE=$SIZE
                 shift 2
                 ;;
+            *)
+                usage
+                ;;
         esac
     done
 }
@@ -154,17 +157,21 @@ check_variables() {
 copy_file() {
     # Loop until the required size of thedestination file
     # becomes greater than its actual size
-    while [[ "$ACTUAL_SIZE" -le "$REQUIRED_SIZE" ]]
-    do
-        echo 'COPYING...'
-        # Copying existing lines to new file
+    # while [[ "$ACTUAL_SIZE" -le "$REQUIRED_SIZE" ]]
+    # do
+        # echo 'COPYING...'
+        # # Copying existing lines to new file
         echo "$ORIGINAL_FILE" "$DESTINATION_FILE"
-        echo $(sed -n $ORIGNAL_FILE)
-        echo "$(cat $ORIGNAL_FILE)" >> $DESTINATION_FILE
-        #Recompute the size of new the file after copy
-        ACTUAL_SIZE="$(stat --printf='%s' $DESTINATION_FILE)"
-        echo 'Actual size is ' $ACTUAL_SIZE
-    done
+        while IFS=read -r line
+        do
+            printf $line 
+        done <"$ORIGNAL_FILE" # >> $DESTINATION_FILE
+#
+        # echo "$(cat $ORIGNAL_FILE)" >> $DESTINATION_FILE
+        # #Recompute the size of new the file after copy
+        # ACTUAL_SIZE="$(stat --printf='%s' $DESTINATION_FILE)"
+        # echo 'Actual size is ' $ACTUAL_SIZE
+    # done
 }
 
 ##########################################################
