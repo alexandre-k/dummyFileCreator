@@ -78,7 +78,7 @@ check_required_size() {
 
     # Check size type
     [[ $1 =~ ([0-9]+) ]] && CLEANED_SIZE="${BASH_REMATCH[1]}"
-    echo 'Cleaned size: ' $CLEANED_SIZE
+
     if [[ $1 =~ .*KB ]]; then
         SIZE=$(($CLEANED_SIZE * 1000))
     fi
@@ -104,7 +104,7 @@ arg_handler() {
             -f)
                 check_original_file_existence $2
                 ORIGINAL_FILE="$2"
-                ACTUAL_SIZE=$(stat --printf='%s' $ORIGINAL_FILE)
+                ACTUAL_SIZE=$(stat --format=%B --printf='%s' $ORIGINAL_FILE)
                 shift 2
                 ;;
             -d)
@@ -149,30 +149,60 @@ usage() {
 check_variables() {
     echo 'ORIGINAL FILE: ' $ORIGINAL_FILE
     echo 'DESTINATION FILE: ' $DESTINATION_FILE
-    echo 'ACTUAL SIZE IN BITS: ' $ACTUAL_SIZE
-    echo 'REQUIRED SIZE IN BITS: ' $REQUIRED_SIZE
+    echo 'ACTUAL SIZE IN BYTES: ' $ACTUAL_SIZE
+    echo 'REQUIRED SIZE IN BYTES: ' $REQUIRED_SIZE
+}
+
+##########################################################
+display_size() {
+
+    SIZE_IN_KB=$(( $ACTUAL_SIZE / 1024 ))
+    SIZE_IN_MB=$(( $SIZE_IN_KB / 1024 ))
+    # SIZE_IN_GB=$((SIZE_IN_MB/1024))
+
+    if [[ $ACTUAL_SIZE -le 1000 ]]; then
+        echo -ne '\t宛先ファイルのサイズは' $ACTUAL_SIZE 'Bytes'
+    fi
+
+    if [[ $ACTUAL_SIZE -ge 1000 ]] && [[ $ACTUAL_SIZE -le 1000000 ]]; then
+        echo -ne '\t宛先ファイルのサイズは' $SIZE_IN_KB 'KB ('$ACTUAL_SIZE Bytes')'
+    fi
+
+    if [[ $ACTUAL_SIZE -ge 1000000 ]]; then
+        echo -ne '\t宛先ファイルのサイズは' $SIZE_IN_MB 'MB (' $SIZE_IN_KB KB')'
+    fi
+
+    # if [[ $ACTUAL_SIZE -ge 1000000000 ]]; then
+        # echo -ne '宛先ファイルのサイズは' $SIZE_IN_GB 'GB'
+    # fi
 }
 
 ##########################################################
 copy_file() {
     # Loop until the required size of thedestination file
     # becomes greater than its actual size
-    # while [[ "$ACTUAL_SIZE" -le "$REQUIRED_SIZE" ]]
-    # do
-        # echo 'COPYING...'
-        # # Copying existing lines to new file
-        echo "$ORIGINAL_FILE" "$DESTINATION_FILE"
-        while IFS=read -r line
+    echo -e ${ORIGINAL_FILE}' から'${DESTINATION_FILE}' へコピー中。。。'
+    echo '中止するためにCtrl+Cキーを押下してください。'
+
+    spin='-\|/'
+    i=0
+
+    while [[ "$ACTUAL_SIZE" -le "$REQUIRED_SIZE" ]]
+    do
+        # Copying existing lines to new file
+        cat $ORIGINAL_FILE | while read line
         do
-            printf $line 
-        done <"$ORIGNAL_FILE" # >> $DESTINATION_FILE
-#
-        # echo "$(cat $ORIGNAL_FILE)" >> $DESTINATION_FILE
-        # #Recompute the size of new the file after copy
-        # ACTUAL_SIZE="$(stat --printf='%s' $DESTINATION_FILE)"
-        # echo 'Actual size is ' $ACTUAL_SIZE
-    # done
+            echo $line  >> $DESTINATION_FILE
+            i=$(( (i+1) % 4 ))
+            printf "\r${spin:$i:1}"
+        done
+
+        #Recompute the size of new the file after copying it completely one time
+        ACTUAL_SIZE="$(stat --format=%B --printf='%s' $DESTINATION_FILE)"
+        display_size $ACTUAL_SIZE
+    done
 }
+
 
 ##########################################################
 main() {
@@ -181,6 +211,12 @@ main() {
     arg_handler $@
     check_variables
     copy_file  $ACTUAL_SIZE $REQUIRED_SIZE $ORIGINAL_FILE $DESTINATION_FILE
+    # ORIGINAL_FILE='text.csv'
+    # while read line
+    # do
+        # echo $line
+    # done < $ORIGINAL_FILE
+
 }
 
 main $@
