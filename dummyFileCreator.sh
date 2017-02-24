@@ -211,12 +211,6 @@ main() {
     arg_handler $@
     check_variables
     copy_file  $ACTUAL_SIZE $REQUIRED_SIZE $ORIGINAL_FILE $DESTINATION_FILE
-    # ORIGINAL_FILE='text.csv'
-    # while read line
-    # do
-        # echo $line
-    # done < $ORIGINAL_FILE
-
 }
 
 main $@
