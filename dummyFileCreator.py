@@ -1,9 +1,10 @@
 #!/usr/bin/python
 import click
-import os
-import pandas
-import re
+import csv
 import datetime as dt
+import os
+import re
+from sys import getsizeof
 
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -40,11 +41,28 @@ def confirmation(source, target, size):
     print('サイズ：{} bytes'.format(size))
     print('**************************')
 
+
+def reader(source, delimiter):
+    with open(source) as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=delimiter)
+        rows = []
+        for row in csv_reader:
+            rows.append(row)
+    return rows
+
+def writer(target, delimiter, rows):
+    with open(target, 'a+') as csvfile:
+        csv_writer = csv.writer(csvfile, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+        for row in rows:
+            csv_writer.writerows(row)
+    return True
+
 @click.command()
 @click.option('--source', help='手元のファイル')
 @click.option('--target', help='宛先ファイル')
 @click.option('--size', help='宛先ファイルのサイズ')
-def main(source, target, size):
+@click.option('--delimiter', help='コマやタブの区切り：,や\t')
+def main(source, target, size, delimiter):
     '''
     Main function
     '''
@@ -82,16 +100,27 @@ def main(source, target, size):
     #
     # Read file
     #
-    data = pandas.read_csv(source)
+    data = reader(source, delimiter)
+    container = []
 
     #
     # Start time
     #
     t1 = dt.datetime.now()
+
+    #
+    # Write file
+    #
     while os.path.getsize(target) < size:
+        if getsizeof(container) < 5000:
+            container.append(data)
+        else:
+            writer(target, delimiter, (container))
+            size_in_mb = os.path.getsize(target) / 1000000
+
         size_in_mb = os.path.getsize(target) / 1000000
-        print('宛先ファイルのサイズ: {}MB\r'.format(size_in_mb), end='')
-        data.to_csv(target, mode='a', index=False)
+        print('宛先ファイルのサイズ: {}MB and container: {}\r'.format(size_in_mb, getsizeof(container)), end='')
+    print('\n')
 
     #
     # End time
@@ -99,9 +128,6 @@ def main(source, target, size):
     t2 = dt.datetime.now()
     print('t1 {}'.format(t1))
     print('t2 {}'.format(t2))
-
-
-
 
 
 if __name__ == '__main__':
