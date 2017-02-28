@@ -41,9 +41,8 @@ def confirmation(source, target, size):
     print('サイズ：{} bytes'.format(size))
     print('**************************')
 
-
-def reader(source, delimiter):
-    with open(source) as csvfile:
+def reader(source, delimiter, encoding):
+    with open(source, 'r', encoding=encoding) as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=delimiter)
         rows = []
         for row in csv_reader:
@@ -51,8 +50,10 @@ def reader(source, delimiter):
     return rows
 
 def writer(target, delimiter, rows):
-    with open(target, 'a+') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+    with open(target, 'a+', encoding='utf-8') as csvfile:
+        csv_writer = csv.writer(csvfile,
+                                delimiter=delimiter,
+                                quoting=csv.QUOTE_NONE)
         for row in rows:
             csv_writer.writerows(row)
     return True
@@ -62,7 +63,8 @@ def writer(target, delimiter, rows):
 @click.option('--target', help='宛先ファイル')
 @click.option('--size', help='宛先ファイルのサイズ')
 @click.option('--delimiter', help='コマやタブの区切り：,や\t')
-def main(source, target, size, delimiter):
+@click.option('--encoding', help='文字コードの種類：shift_jisやutf-8')
+def main(source, target, size, delimiter, encoding):
     '''
     Main function
     '''
@@ -100,7 +102,7 @@ def main(source, target, size, delimiter):
     #
     # Read file
     #
-    data = reader(source, delimiter)
+    data = reader(source, delimiter, encoding)
     container = []
 
     #
