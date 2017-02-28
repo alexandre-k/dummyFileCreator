@@ -19,7 +19,7 @@ def exists(file):
 
 def not_exists(file):
     if os.path.isfile(os.path.join(DIR_PATH, file)):
-        answer = click.prompt(Fore.RED + '''「{}」既に存在します。そのファイルにデータを追加しますか。\n
+        answer = click.prompt(Fore.RED + '''「{}」は既に存在します。そのファイルにデータを追加しますか。\n
               「y」や「n」で返答してください。'''.format(file))
         if str(answer) == 'y':
             return True
@@ -75,7 +75,7 @@ def welcome():
         os.system('clear')
 
     fig = Figlet(font='slant')
-    print(Fore.CYAN + fig.renderText('WELCOME'))
+    print(Fore.CYAN + fig.renderText('WELCOME FOLKS'))
 
 
 @click.command()
@@ -152,7 +152,7 @@ def main(source, target, size, delimiter, encoding):
     # Write file
     #
     while os.path.getsize(target) < size:
-        if getsizeof(container) < 5000:
+        if getsizeof(container) < 10000:
             container.append(data)
         else:
             writer(target, delimiter, (container))
